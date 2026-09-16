@@ -1,11 +1,11 @@
-"""Camera demo: run the webcam through MediaPipe HandLandmarker (hands
-only -- no face/body tracking) and print the discrete robot command
-hand_command_controller.HandCommandController recognizes from it.
+"""Camera demo: run the webcam through MediaPipe HandLandmarker and print the
+wheel speeds hand_gesture_controller.GestureController computes from it.
 
-No LEGO motor calls yet -- this is just to see the gesture -> command
+No LEGO motor calls yet -- this is just to see the hand tracking + gesture
 mapping work live before wiring it to actual motors.
 """
 
+import os
 import time
 
 import cv2
@@ -19,9 +19,9 @@ from mediapipe.tasks.python.vision.core.vision_task_running_mode import (
     VisionTaskRunningMode,
 )
 
-from hand_command_controller import HandCommandController
+from hand_gesture_controller import GestureController
 
-MODEL_PATH = "hand_landmarker.task"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "hand_landmarker.task")
 MIRRORED = True  # flip the frame for a natural "mirror" webcam view
 
 options = HandLandmarkerOptions(
@@ -31,7 +31,7 @@ options = HandLandmarkerOptions(
 )
 
 landmarker = HandLandmarker.create_from_options(options)
-controller = HandCommandController()
+controller = GestureController()
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -55,7 +55,17 @@ try:
         timestamp_ms = int((time.time() - start_time) * 1000)
 
         result = landmarker.detect_for_video(mp_image, timestamp_ms)
-        command = controller.update(result, mirrored=MIRRORED)
+        speeds = controller.update(result, mirrored=MIRRORED)
+
+        cv2.putText(
+            frame,
+            f"L: {speeds.left:6.1f}%  R: {speeds.right:6.1f}%",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
 
         for hand_landmarks in result.hand_landmarks:
             for landmark in hand_landmarks:
@@ -63,19 +73,7 @@ try:
                 y = int(landmark.y * frame.shape[0])
                 cv2.circle(frame, (x, y), 4, (0, 0, 255), -1)
 
-        cv2.putText(frame, command.name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-        cv2.putText(
-            frame,
-            f"L: {command.left_speed:5.0f}%  R: {command.right_speed:5.0f}%  "
-            f"Single: {command.single_motor_speed:5.0f}%",
-            (10, 60),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.6,
-            (0, 255, 0),
-            2,
-        )
-
-        cv2.imshow("Hand Command Control", frame)
+        cv2.imshow("Hand Gesture Control", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 finally:
