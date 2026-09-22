@@ -1,0 +1,5 @@
+legoeducation==1.1.1      # lelib.py, main.py — LEGO Education hub BLE protocol
+opencv-python==4.13.0.92  # camlib.py — camera enumeration/capture (NOT the -headless variant)
+numpy>=1.24               # camlib.py — frame arrays
+sounddevice>=0.4          # miclib.py — audio device listing
+paho-mqtt>=2.0            # mqttlib.py — MQTT publish/subscribe
