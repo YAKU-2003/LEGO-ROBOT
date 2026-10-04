@@ -1,0 +1,13 @@
+names:
+- green_lego_minifigure
+nc: 1
+path: C:\Users\ykulk\lego_robot_project\minifig\laptop\dataset
+roboflow:
+  license: Private
+  project: green-lego-minifigure
+  url: https://app.roboflow.com/yash_sharad-kulkarni-tufts-edu/green-lego-minifigure/1
+  version: 1
+  workspace: yash_sharad-kulkarni-tufts-edu
+test: test/images
+train: train/images
+val: valid/images
