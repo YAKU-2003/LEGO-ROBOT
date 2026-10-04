@@ -1,0 +1,13 @@
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 1
+names: ['green_lego_minifigure']
+
+roboflow:
+  workspace: yash_sharad-kulkarni-tufts-edu
+  project: green-lego-minifigure
+  version: 1
+  license: Private
+  url: https://app.roboflow.com/yash_sharad-kulkarni-tufts-edu/green-lego-minifigure/1

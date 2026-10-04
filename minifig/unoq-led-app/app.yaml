@@ -1,0 +1,5 @@
+name: Minifig LED Tracker
+description: "Receives the green minifig's position over MQTT and lights a dot on the LED matrix"
+icon: 🟢
+ports: []
+bricks: []

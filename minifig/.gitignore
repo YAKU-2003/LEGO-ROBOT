@@ -1,0 +1,6 @@
+# training output, except the trained model so the detector works right after cloning
+laptop/yolov8n.pt
+laptop/runs/**
+!laptop/runs/**/
+!laptop/runs/detect/green_minifig/weights/best.pt
+laptop/dataset/**/labels.cache
