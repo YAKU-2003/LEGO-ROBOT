@@ -1,0 +1,12 @@
+names:
+- Blue-Lego-Minifig
+nc: 1
+path: C:\Users\ykulk\lego_robot_project\minifig\laptop\datasets\blue
+roboflow:
+  license: Private
+  project: blue-lego-minifig
+  url: https://app.roboflow.com/yash_sharad-kulkarni-tufts-edu/blue-lego-minifig/1
+  version: 1
+  workspace: yash_sharad-kulkarni-tufts-edu
+train: train/images
+val: valid/images

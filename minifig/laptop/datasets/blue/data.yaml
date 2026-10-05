@@ -1,0 +1,12 @@
+train: train/images
+val: valid/images
+
+nc: 1
+names: ['Blue-Lego-Minifig']
+
+roboflow:
+  workspace: yash_sharad-kulkarni-tufts-edu
+  project: blue-lego-minifig
+  version: 1
+  license: Private
+  url: https://app.roboflow.com/yash_sharad-kulkarni-tufts-edu/blue-lego-minifig/1

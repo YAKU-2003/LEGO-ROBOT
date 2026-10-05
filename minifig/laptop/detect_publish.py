@@ -1,10 +1,10 @@
 """Detect the green minifig in the webcam feed and publish its position over MQTT.
 
 Topic minifig/pos, x/y normalized 0..1 (origin top-left):
-  {"found": true, "x": 0.42, "y": 0.61, "conf": 0.88}
-  {"found": false}
+  {"color": "green", "found": true, "x": 0.42, "y": 0.61, "conf": 0.88}
+  {"color": "green", "found": false}
 
-Test without MQTT first:  python detect_publish.py --no-mqtt
+Test without MQTT first:  python detect_publish.py --color green --no-mqtt
 """
 import argparse
 import json
@@ -15,7 +15,8 @@ import cv2
 from ultralytics import YOLO
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--weights", default=str(Path(__file__).parent / "runs" / "detect" / "green_minifig" / "weights" / "best.pt"))
+parser.add_argument("--color", default="green", help="which trained model to use: green or blue")
+parser.add_argument("--weights", help="override the model path (default: runs/detect/<color>_minifig/weights/best.pt)")
 parser.add_argument("--broker", default="localhost")
 parser.add_argument("--port", type=int, default=1883)
 parser.add_argument("--topic", default="minifig/pos")
@@ -26,7 +27,10 @@ parser.add_argument("--rate", type=float, default=10.0, help="max MQTT messages 
 parser.add_argument("--no-mqtt", action="store_true", help="only show detections, don't publish")
 args = parser.parse_args()
 
-model = YOLO(args.weights)
+weights = args.weights or Path(__file__).parent / "runs" / "detect" / f"{args.color}_minifig" / "weights" / "best.pt"
+if not Path(weights).exists():
+    raise SystemExit(f"No model at {weights} - run: python train.py --color {args.color}")
+model = YOLO(weights)
 
 client = None
 if not args.no_mqtt:
@@ -55,11 +59,11 @@ while True:
         best = int(result.boxes.conf.argmax())
         x1, y1, x2, y2 = result.boxes.xyxy[best].tolist()
         cx, cy = (x1 + x2) / 2, (y1 + y2) / 2
-        msg = {"found": True, "x": round(cx / w, 3), "y": round(cy / h, 3),
+        msg = {"color": args.color, "found": True, "x": round(cx / w, 3), "y": round(cy / h, 3),
                "conf": round(float(result.boxes.conf[best]), 2)}
         cv2.circle(annotated, (int(cx), int(cy)), 6, (255, 0, 0), -1)
     else:
-        msg = {"found": False}
+        msg = {"color": args.color, "found": False}
 
     now = time.time()
     if client and now - last_pub >= 1.0 / args.rate:
@@ -67,7 +71,7 @@ while True:
         last_pub = now
 
     cv2.putText(annotated, json.dumps(msg), (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-    cv2.imshow("minifig detection (Esc to quit)", annotated)
+    cv2.imshow(f"{args.color} minifig detection (Esc to quit)", annotated)
     if cv2.waitKey(1) == 27:
         break
 
