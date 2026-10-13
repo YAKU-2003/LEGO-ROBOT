@@ -1,7 +1,7 @@
 """Make printable AprilTags (tag36h11) for the level select: 1 = EASY, 2 = MEDIUM, 3 = HARD.
 
-Run:  my_env\\Scripts\\python.exe pingpong\\make_tags.py
-Then print pingpong\\tags\\tag_1.png etc. (keep the white border around each tag).
+Run:  my_env\\Scripts\\python.exe ME193\\pingpong\\make_tags.py
+Then print ME193\\pingpong\\tags\\tag_1.png etc. (keep the white border around each tag).
 """
 
 import os

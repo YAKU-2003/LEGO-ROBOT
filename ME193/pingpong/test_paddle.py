@@ -14,9 +14,9 @@
        sensor) and prints / flashes / buzzes on every swing it detects.
 
 Run (from the lego_robot_project folder):
-    my_env\\Scripts\\python.exe pingpong\\test_paddle.py
-    my_env\\Scripts\\python.exe pingpong\\test_paddle.py --card-serial 7572 --card-color orange
-    my_env\\Scripts\\python.exe pingpong\\test_paddle.py --skip-calibration
+    my_env\\Scripts\\python.exe ME193\\pingpong\\test_paddle.py
+    my_env\\Scripts\\python.exe ME193\\pingpong\\test_paddle.py --card-serial 7572 --card-color orange
+    my_env\\Scripts\\python.exe ME193\\pingpong\\test_paddle.py --skip-calibration
 """
 
 import argparse

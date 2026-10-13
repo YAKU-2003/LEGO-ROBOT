@@ -1,5 +1,5 @@
 """Sound effects, synthesized with numpy (no downloads) and played with Windows'
-built-in winsound. Files are generated once into pingpong/sounds/.
+built-in winsound. Files are generated once into ME193/pingpong/sounds/.
 
     sfx = Sounds()          # Sounds(enabled=False) to mute
     sfx.play("hit")

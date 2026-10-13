@@ -1,7 +1,7 @@
 """Ping-pong paddles: anything with an IMU that can tell the game "I swung".
 
     UnoQPaddle      Arduino UNO Q + MPU6050 + light sensor (the default).
-                    The board's app (pingpong/unoq-paddle-app) streams the IMU
+                    The board's app (ME193/pingpong/unoq-paddle-app) streams the IMU
                     over MQTT to a Mosquitto broker on this laptop; the game
                     sends back icons for the board's LED matrix (hit / miss /
                     ...). Covering the light sensor = a "serve / rematch" button.
@@ -235,10 +235,10 @@ class UnoQPaddle(IMUPaddle):
                                              creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         for _ in range(30):
             if _port_open(self.broker, self.port):
-                print(f"[unoq] started Mosquitto broker (log: pingpong/mosquitto.log)")
+                print(f"[unoq] started Mosquitto broker (log: ME193/pingpong/mosquitto.log)")
                 return
             time.sleep(0.1)
-        raise ConnectionError("Started Mosquitto but it isn't accepting connections (see pingpong/mosquitto.log)")
+        raise ConnectionError("Started Mosquitto but it isn't accepting connections (see ME193/pingpong/mosquitto.log)")
 
     def connect(self, wait_s=0.0):
         """Connect to the broker; optionally wait up to wait_s for the board's data."""

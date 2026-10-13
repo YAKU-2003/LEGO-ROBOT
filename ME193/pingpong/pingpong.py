@@ -20,10 +20,10 @@ IMU detected a swing within the timing window around arrival AND one of your
 wrists was inside the ring at the moment of that swing. Otherwise MISS.
 
 Run (from the lego_robot_project folder):
-    my_env\\Scripts\\python.exe pingpong\\pingpong.py
-    my_env\\Scripts\\python.exe pingpong\\pingpong.py --card-serial 7572 --card-color orange
-    my_env\\Scripts\\python.exe pingpong\\pingpong.py --no-paddle     (SPACE = swing, no hardware)
-    my_env\\Scripts\\python.exe pingpong\\pingpong.py --no-mqtt
+    my_env\\Scripts\\python.exe ME193\\pingpong\\pingpong.py
+    my_env\\Scripts\\python.exe ME193\\pingpong\\pingpong.py --card-serial 7572 --card-color orange
+    my_env\\Scripts\\python.exe ME193\\pingpong\\pingpong.py --no-paddle     (SPACE = swing, no hardware)
+    my_env\\Scripts\\python.exe ME193\\pingpong\\pingpong.py --no-mqtt
 
 Fun stuff:
     SMASH        swing much harder than your normal swing -> the robot is
@@ -101,7 +101,7 @@ LEVEL_COLORS = {1: (110, 215, 90), 2: (0, 185, 255), 3: (80, 80, 245)}
 BOT_NAMES = {1: "FORREST GUMP", 2: "MARTY SUPREME", 3: "PROF ROGERS"}
 BOT_COLORS = {1: (70, 170, 60), 2: (200, 110, 30), 3: (60, 60, 220)}  # scoreboard colour per opponent
 
-# Photo opponents (transparent PNGs in pingpong/assets). If a photo is missing,
+# Photo opponents (transparent PNGs in ME193/pingpong/assets). If a photo is missing,
 # that level falls back to the LEGO robot. paddle = paddle centre in the original
 # image (px); the rest is sizing/placement, see graphics.PhotoOpponent.
 OPPONENT_PHOTOS = {
@@ -999,7 +999,7 @@ def main(default_paddle="lego"):
         else:
             print("  no data from the UNO Q yet -- the game will start anyway and pick it up when it arrives")
     if kind != "keyboard" and not paddle.calibrated:
-        print(f"  (not calibrated yet -- run: my_env\\Scripts\\python.exe pingpong\\test_paddle.py --paddle {kind})")
+        print(f"  (not calibrated yet -- run: my_env\\Scripts\\python.exe ME193\\pingpong\\test_paddle.py --paddle {kind})")
 
     topic = f"ME193/Rogers/{args.name}"
     publisher = ScorePublisher(topic, enabled=not args.no_mqtt)

@@ -6,14 +6,14 @@ Control a LEGO robot's motors with hand and arm gestures seen through a webcam. 
 
 ## Layout
 
-- [`poserace/`](poserace/) -- all gesture/pose recognition and LEGO motor code.
-- [`image_processing/`](image_processing/) -- an unrelated standalone OpenCV playground (grayscale/threshold/morphology), not connected to the gesture or motor code.
+- [`ME193/poserace/`](ME193/poserace/) -- all gesture/pose recognition and LEGO motor code.
+- [`ME193/image_processing/`](ME193/image_processing/) -- an unrelated standalone OpenCV playground (grayscale/threshold/morphology), not connected to the gesture or motor code.
 
 ## Gesture schemes
 
 ### Continuous: wrist height -> wheel speed
 
-[`poserace/pose_gesture_controller.py`](poserace/pose_gesture_controller.py) (full-body pose) and [`poserace/hand_gesture_controller.py`](poserace/hand_gesture_controller.py) (hands only) both map an arm's height to a continuous wheel speed from -100% (full reverse) to +100% (full forward):
+[`ME193/poserace/pose_gesture_controller.py`](ME193/poserace/pose_gesture_controller.py) (full-body pose) and [`ME193/poserace/hand_gesture_controller.py`](ME193/poserace/hand_gesture_controller.py) (hands only) both map an arm's height to a continuous wheel speed from -100% (full reverse) to +100% (full forward):
 
 - Wrist at the neutral height -> that wheel is stopped (a small dead zone so a resting arm doesn't drift).
 - Raise a hand/arm -> that side's wheel drives forward, faster the higher you raise it.
@@ -22,7 +22,7 @@ Control a LEGO robot's motors with hand and arm gestures seen through a webcam. 
 
 The two versions differ only in what "neutral" and "scale" mean, because a hand alone has no shoulder to measure against:
 
-| | `poserace/pose_gesture_controller.py` | `poserace/hand_gesture_controller.py` |
+| | `ME193/poserace/pose_gesture_controller.py` | `ME193/poserace/hand_gesture_controller.py` |
 |---|---|---|
 | Neutral height | that arm's own shoulder | fixed frame center |
 | Scale reference | shoulder width | wrist-to-middle-knuckle span |
@@ -30,11 +30,11 @@ The two versions differ only in what "neutral" and "scale" mean, because a hand 
 
 Shoulder/hand width is used as the scale reference (instead of, say, shoulder-to-hip torso length) because it stays in frame even when a webcam only frames head-to-waist. Reaching full speed takes a bigger raise going forward than going backward, since a lowered arm tends to leave the camera's view sooner than a raised one. Both controllers smooth the output with an exponential moving average to reduce frame-to-frame jitter.
 
-[`poserace/run_pose_gesture.py`](poserace/run_pose_gesture.py) additionally watches for a `Closed_Fist` or `Open_Palm` gesture (via [`poserace/pose_camera.py`](poserace/pose_camera.py)'s built-in `GestureRecognizer`) as an emergency-stop override on top of the arm control.
+[`ME193/poserace/run_pose_gesture.py`](ME193/poserace/run_pose_gesture.py) additionally watches for a `Closed_Fist` or `Open_Palm` gesture (via [`ME193/poserace/pose_camera.py`](ME193/poserace/pose_camera.py)'s built-in `GestureRecognizer`) as an emergency-stop override on top of the arm control.
 
 ### Discrete: hand shape -> one-shot command
 
-[`poserace/hand_command_controller.py`](poserace/hand_command_controller.py) takes a different approach: instead of a continuous speed, it recognizes a fixed hand shape each frame and outputs one command:
+[`ME193/poserace/hand_command_controller.py`](ME193/poserace/hand_command_controller.py) takes a different approach: instead of a continuous speed, it recognizes a fixed hand shape each frame and outputs one command:
 
 - Both hands raised, palms open -> drive forward.
 - Both hands raised, fists -> drive backward.
@@ -57,18 +57,18 @@ pip install opencv-python mediapipe numpy
 ## Run
 
 ```
-python poserace/run_hand_commands.py    # discrete hand-shape commands (hands only, no face)
-python poserace/run_hand_gesture.py     # continuous wrist-height control (hands only)
-python poserace/run_pose_gesture.py     # continuous arm-height control + fist/palm stop gesture (full body)
+python ME193/poserace/run_hand_commands.py    # discrete hand-shape commands (hands only, no face)
+python ME193/poserace/run_hand_gesture.py     # continuous wrist-height control (hands only)
+python ME193/poserace/run_pose_gesture.py     # continuous arm-height control + fist/palm stop gesture (full body)
 ```
 
-Press `q` in the video window to quit. `run_hand_commands.py` and `run_hand_gesture.py` need [`poserace/hand_landmarker.task`](poserace/hand_landmarker.task) (already checked into the repo). `run_pose_gesture.py` downloads its two models (pose + gesture, ~14MB total) automatically into `poserace/models/` on first run.
+Press `q` in the video window to quit. `run_hand_commands.py` and `run_hand_gesture.py` need [`ME193/poserace/hand_landmarker.task`](ME193/poserace/hand_landmarker.task) (already checked into the repo). `run_pose_gesture.py` downloads its two models (pose + gesture, ~14MB total) automatically into `ME193/poserace/models/` on first run.
 
-Also in `poserace/`:
-- [`test_single_motor.py`](poserace/test_single_motor.py) -- connects to a real LEGO Education Single Motor over Bluetooth and spins it, as a hardware smoke test.
+Also in `ME193/poserace/`:
+- [`test_single_motor.py`](ME193/poserace/test_single_motor.py) -- connects to a real LEGO Education Single Motor over Bluetooth and spins it, as a hardware smoke test.
 
-And separately, in `image_processing/`:
-- [`grayscale_image.py`](image_processing/grayscale_image.py) -- grayscale -> threshold -> erode/dilate -> boundary extraction -> convolution-kernel presets, used to prototype image-processing ideas.
+And separately, in `ME193/image_processing/`:
+- [`grayscale_image.py`](ME193/image_processing/grayscale_image.py) -- grayscale -> threshold -> erode/dilate -> boundary extraction -> convolution-kernel presets, used to prototype image-processing ideas.
 
 ## Status
 
