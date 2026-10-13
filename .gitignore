@@ -2,3 +2,9 @@ my_env/
 __pycache__/
 *.pyc
 models/
+
+# ping-pong: opponent photos stay local (real people / film stills), plus generated/per-device files
+pingpong/assets/*.png
+pingpong/sounds/
+pingpong/mosquitto.log
+pingpong/paddle_config*.json

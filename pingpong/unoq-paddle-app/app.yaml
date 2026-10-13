@@ -1,0 +1,5 @@
+name: Ping Pong Paddle
+description: "Streams the MPU6050 + light sensor to the laptop's ping-pong game over MQTT and shows hit/miss icons on the LED matrix"
+icon: 🏓
+ports: []
+bricks: []
