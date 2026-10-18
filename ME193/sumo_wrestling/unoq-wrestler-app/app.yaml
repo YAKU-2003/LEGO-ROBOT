@@ -1,0 +1,5 @@
+name: Sumo Wrestler
+description: "Decision-tree sumo robot: MPU6050 + light sensors, LEGO motors via Maker Drive, telemetry/commands over MQTT"
+icon: 🤼
+ports: []
+bricks: []
