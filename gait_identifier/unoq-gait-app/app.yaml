@@ -1,0 +1,5 @@
+name: Gait Wearable
+description: "Streams the ankle-mounted MPU6050 to the laptop over MQTT and shows the two models' activity guesses (S/W/R/B) on the LED matrix"
+icon: 🏃
+ports: []
+bricks: []
