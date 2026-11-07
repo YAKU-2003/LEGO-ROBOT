@@ -94,6 +94,31 @@ void show_pred(int model1, int model2) {
   matrix.draw(frame);
 }
 
+// 3 x 5 digits for the step counter (step_counter/laptop/app.py sends the count).
+const char* DIGITS[10][5] = {
+  {"###", "#.#", "#.#", "#.#", "###"}, {".#.", "##.", ".#.", ".#.", "###"}, {"###", "..#", "###", "#..", "###"},
+  {"###", "..#", ".##", "..#", "###"}, {"#.#", "#.#", "###", "..#", "..#"}, {"###", "#..", "###", "..#", "###"},
+  {"###", "#..", "###", "#.#", "###"}, {"###", "..#", ".#.", ".#.", ".#."}, {"###", "#.#", "###", "#.#", "###"},
+  {"###", "#.#", "###", "..#", "###"}};
+
+// Called from python/main.py with the running step count: the last 3 digits,
+// plus one dim dot along the bottom row per 1000 steps.
+void show_steps(int steps) {
+  uint8_t frame[ROWS * COLS] = {0};
+  int n = steps % 1000;
+  int digits = n >= 100 ? 3 : (n >= 10 ? 2 : 1);
+  int col0 = COLS - (digits * 4 - 1);  // right-aligned, 1 blank column between digits
+  int div = digits == 3 ? 100 : (digits == 2 ? 10 : 1);
+  for (int i = 0; i < digits; i++, div /= 10) {
+    int d = (n / div) % 10;
+    for (int r = 0; r < 5; r++)
+      for (int c = 0; c < 3; c++)
+        frame[(r + 1) * COLS + col0 + i * 4 + c] = (DIGITS[d][r][c] == '#') ? 7 : 0;
+  }
+  for (int k = 0; k < steps / 1000 && k < COLS; k++) frame[7 * COLS + k] = 3;
+  matrix.draw(frame);
+}
+
 void setupSensor() {
   mpu.setAccelerometerRange(MPU6050_RANGE_16_G);  // ankle impacts when running can pass 8 g
   mpu.setGyroRange(MPU6050_RANGE_2000_DEG);       // the shank swings fast when running
@@ -107,6 +132,7 @@ void setup() {
 
   Bridge.begin();
   Bridge.provide("show_pred", show_pred);
+  Bridge.provide("show_steps", show_steps);
 
   Wire.begin();
   Wire.setClock(400000);

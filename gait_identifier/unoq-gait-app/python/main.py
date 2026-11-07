@@ -2,6 +2,7 @@
 #
 # sketch.ino -> Bridge "imu" -> this file -> MQTT "gait/imu" -> the laptop (record.py / live.py)
 # live.py -> MQTT "gait/prediction" ("2,3" = model1 walking, model2 running) -> Bridge "show_pred" -> LED matrix
+# step_counter/laptop/app.py -> MQTT "gait/steps" ("128") -> Bridge "show_steps" -> LED matrix
 #
 # The console (App Lab's Python output) shows, every second:
 #   SENSORS  what the MPU6050 reads right now   <- check this first
@@ -17,6 +18,7 @@ MQTT_HOST = "192.168.4.231"  # <-- the laptop's IP (run ipconfig on the laptop i
 MQTT_PORT = 1883
 IMU_TOPIC = "gait/imu"
 PREDICTION_TOPIC = "gait/prediction"
+STEPS_TOPIC = "gait/steps"
 STATUS_TOPIC = "gait/status"
 PRINT_EVERY_S = 1.0
 
@@ -78,7 +80,7 @@ def on_connect(client, userdata, flags, reason_code, properties=None):
     except (AttributeError, OSError) as e:
         print(f"(couldn't set TCP_NODELAY: {e})")
     print(f"LAPTOP CONNECTED ({MQTT_HOST}:{MQTT_PORT})")
-    client.subscribe(PREDICTION_TOPIC)
+    client.subscribe([(PREDICTION_TOPIC, 0), (STEPS_TOPIC, 0)])
     client.publish(STATUS_TOPIC, "UNO Q gait wearable connected")
 
 
@@ -95,12 +97,15 @@ def on_connect_fail(client, userdata):
     mqtt_problem = "laptop reachable but MQTT connect failed; retrying"
 
 
-def on_prediction(client, userdata, msg):
+def on_message(client, userdata, msg):
     try:
-        m1, m2 = (int(v) for v in msg.payload.decode().split(","))
+        values = [int(v) for v in msg.payload.decode().split(",")]
     except ValueError:
         return
-    Bridge.notify("show_pred", m1, m2)
+    if msg.topic == STEPS_TOPIC and len(values) == 1:
+        Bridge.notify("show_steps", values[0])
+    elif msg.topic == PREDICTION_TOPIC and len(values) == 2:
+        Bridge.notify("show_pred", values[0], values[1])
 
 
 # ── 3. the console report ────────────────────────────────────────────────────
@@ -135,7 +140,7 @@ client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="unoq-gait")
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.on_connect_fail = on_connect_fail
-client.on_message = on_prediction
+client.on_message = on_message
 check_laptop_reachable()
 client.connect_async(MQTT_HOST, MQTT_PORT, keepalive=10)  # keeps retrying until the laptop's broker is up
 client.loop_start()

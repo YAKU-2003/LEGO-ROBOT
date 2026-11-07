@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Step Counter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c11; --surface: #11141b; --surface2: #171b24; --surface3: #1e2330;
+    --border: rgba(255,255,255,.07); --border2: rgba(255,255,255,.12);
+    --text: #e9ecf2; --muted: #8b93a5; --faint: #5a6273;
+    --accent: #7c9cff; --violet: #a78bfa; --ok: #3ecf8e; --warn: #ffb547; --bad: #ff5c7a;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased;
+         background: radial-gradient(1200px 600px at 10% -10%, rgba(124,156,255,.10), transparent 60%),
+                     radial-gradient(900px 500px at 110% 10%, rgba(167,139,250,.08), transparent 60%), var(--bg); min-height: 100vh; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 48px; }
+  .top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+  .logo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+          background: linear-gradient(135deg, var(--accent), var(--violet)); box-shadow: 0 6px 24px rgba(124,156,255,.35); }
+  .brand h1 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.01em; }
+  .brand p { margin: 0; font-size: 12px; color: var(--muted); }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+          background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+  .dot.on { background: var(--ok); box-shadow: 0 0 0 4px rgba(62,207,142,.15); }
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border);
+          border-radius: 14px; margin-bottom: 18px; }
+  .tabs button { border: 0; background: none; color: var(--muted); font: 600 14px Inter, system-ui; padding: 10px 18px;
+                 border-radius: 10px; cursor: pointer; }
+  .tabs button.active { background: var(--surface3); color: var(--text); box-shadow: inset 0 0 0 1px var(--border2); }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: 1fr 1fr; } .g-hero { grid-template-columns: 1fr 1.35fr; } .g3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 880px) { .g2, .g-hero, .g3 { grid-template-columns: 1fr; } }
+  .card { background: linear-gradient(180deg, var(--surface2), var(--surface)); border: 1px solid var(--border);
+          border-radius: var(--radius); padding: 18px; min-width: 0; position: relative; }
+  .card h3 { margin: 0 0 14px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+             color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .card h3 .right { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .hint { color: var(--muted); font-size: 12.5px; }
+  .hidden { display: none !important; }
+  .btn { border: 0; border-radius: 12px; padding: 12px 20px; font: 700 15px Inter, system-ui; cursor: pointer; color: #0b1020;
+         background: linear-gradient(135deg, var(--accent), var(--violet)); box-shadow: 0 8px 24px rgba(124,156,255,.25); }
+  .btn.green { background: var(--ok); color: #06210f; box-shadow: 0 8px 24px rgba(62,207,142,.22); }
+  .btn.red { background: var(--bad); color: #fff; box-shadow: 0 8px 24px rgba(255,92,122,.22); }
+  .btn.ghost { background: var(--surface3); color: var(--text); box-shadow: inset 0 0 0 1px var(--border2); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .banner { border-radius: 14px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; border: 1px solid;
+            background: rgba(255,181,71,.08); border-color: rgba(255,181,71,.35); }
+
+  /* count hero */
+  .hero { text-align: center; padding: 26px 18px 22px; overflow: hidden; }
+  .hero .glow { position: absolute; inset: -30% -10% auto; height: 120%; pointer-events: none;
+                background: radial-gradient(closest-side, rgba(124,156,255,.22), transparent); opacity: .7; }
+  .big { font-size: 112px; font-weight: 900; line-height: 1; letter-spacing: -.04em; position: relative;
+         background: linear-gradient(180deg, #fff, #b9c6ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .big.bump { animation: bump .28s ease-out; }
+  @keyframes bump { 40% { transform: scale(1.06); } }
+  .pm { font-size: 18px; color: var(--muted); font-weight: 600; margin-top: 4px; position: relative; }
+  .pm b { color: var(--text); }
+  .sub { display: flex; justify-content: center; gap: 12px; margin: 18px 0 20px; position: relative; flex-wrap: wrap; }
+  .tile { background: var(--surface3); border: 1px solid var(--border); border-radius: 12px; padding: 8px 14px; min-width: 110px; }
+  .tile .k { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+  .tile .v { font-size: 20px; font-weight: 700; }
+  .ctl { display: flex; gap: 10px; justify-content: center; position: relative; }
+  .trail { display: flex; gap: 2px; justify-content: center; height: 46px; margin-top: 20px; position: relative; overflow: hidden; }
+  .trail svg { width: 18px; height: 30px; color: var(--accent); animation: fade 6s forwards; flex: none; }
+  .trail svg.r { margin-top: 14px; color: var(--violet); }
+  @keyframes fade { 0% { opacity: 0; transform: translateY(6px); } 8% { opacity: 1; transform: none; } 100% { opacity: .15; } }
+  .chart { width: 100%; height: 200px; display: block; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; margin-top: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+  /* record */
+  .kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  @media (max-width: 560px) { .kinds { grid-template-columns: 1fr 1fr; } }
+  .kind { border: 1px solid var(--border); background: var(--surface3); color: var(--text); border-radius: 12px; padding: 10px;
+          cursor: pointer; text-align: left; font: 600 14px Inter, system-ui; }
+  .kind small { display: block; color: var(--muted); font-weight: 500; font-size: 11.5px; margin-top: 2px; }
+  .kind.zero { border-style: dashed; }
+  .kind.sel { border-color: var(--accent); background: rgba(124,156,255,.14); box-shadow: 0 0 0 1px var(--accent); }
+  .kind:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; margin-top: 14px; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-size: 12px; color: var(--muted); font-weight: 600; }
+  input, select { background: var(--surface3); border: 1px solid var(--border); color: var(--text); border-radius: 11px;
+                  padding: 10px 12px; font: 500 14px Inter, system-ui; }
+  input.stepsin { font-size: 34px; font-weight: 800; width: 160px; text-align: center; padding: 8px; }
+  .steps-list { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+  .steps-list li { margin: 3px 0; } .steps-list b { color: var(--text); }
+  .rec-state { font-size: 46px; font-weight: 900; text-align: center; margin: 8px 0 2px; }
+  .confirm { border: 1px solid rgba(124,156,255,.4); background: rgba(124,156,255,.07); border-radius: 14px; padding: 16px; margin-top: 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--faint); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+  .badge.ok { color: var(--ok); background: rgba(62,207,142,.1); } .badge.warn { color: var(--warn); background: rgba(255,181,71,.12); }
+  .badge.dim { color: var(--muted); background: var(--surface3); }
+  .x { background: none; border: 0; color: var(--faint); cursor: pointer; font-size: 15px; padding: 4px 8px; border-radius: 6px; }
+  .x:hover { color: var(--bad); background: rgba(255,92,122,.1); }
+  .cov { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .covc { background: var(--surface3); border: 1px solid var(--border); border-radius: 12px; padding: 9px 12px; }
+  .covc .k { font-size: 12px; color: var(--muted); font-weight: 600; } .covc .v { font-size: 17px; font-weight: 700; }
+  .covc.low { border-color: rgba(255,181,71,.4); }
+
+  /* model */
+  .kpi { text-align: center; } .kpi .v { font-size: 38px; font-weight: 900; letter-spacing: -.02em; }
+  .kpi .k { color: var(--muted); font-size: 13px; font-weight: 600; }
+  .bars { display: grid; gap: 10px; }
+  .bar { display: grid; grid-template-columns: 170px 1fr 70px; align-items: center; gap: 10px; font-size: 13px; }
+  .bar .track { height: 12px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+  .bar .fill { height: 100%; border-radius: 99px; }
+  .plots { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 880px) { .plots { grid-template-columns: 1fr; } }
+  .plots img { width: 100%; border-radius: 12px; background: #fff; }
+  pre.log { max-height: 280px; overflow: auto; background: #07090d; border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+            font: 12px/1.5 "JetBrains Mono", Consolas, monospace; color: #c8cfdc; white-space: pre-wrap; margin: 0; }
+  .spin { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%;
+          animation: rot .8s linear infinite; display: inline-block; vertical-align: -3px; margin-right: 8px; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="brand">
+      <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0b1020"><ellipse cx="8" cy="8" rx="3.2" ry="5"/><ellipse cx="16" cy="15" rx="3.2" ry="5"/></svg></div>
+      <div><h1>Step Counter</h1><p>UNO Q + MPU6050 on the ankle · PyTorch neural net</p></div>
+    </div>
+    <span class="chip"><span class="dot" id="bdot"></span><span id="btxt">board offline</span></span>
+    <span class="chip" id="mchip">no net yet</span>
+  </div>
+  <div class="banner hidden" id="offline">The board isn't sending readings. Start the gait app on the UNO Q in App Lab (same app as the gait identifier), and check it's on the same Wi-Fi.</div>
+
+  <div class="tabs">
+    <button data-tab="count" class="active">Count</button>
+    <button data-tab="record">Record</button>
+    <button data-tab="model">Model</button>
+  </div>
+
+  <!-- COUNT -->
+  <section id="tab-count">
+    <div class="grid g-hero">
+      <div class="card hero">
+        <div class="glow"></div>
+        <div class="big num" id="count">0</div>
+        <div class="pm" id="pm">steps</div>
+        <div class="sub">
+          <div class="tile"><div class="k">Cadence</div><div class="v num" id="cad">–</div></div>
+          <div class="tile"><div class="k">Time</div><div class="v num" id="ctime">0:00</div></div>
+        </div>
+        <div class="ctl">
+          <button class="btn green" id="cstart">Start counting</button>
+          <button class="btn ghost" id="creset">Reset</button>
+        </div>
+        <div class="trail" id="trail"></div>
+        <div class="hint" id="cnote" style="margin-top:8px"></div>
+      </div>
+      <div class="card">
+        <h3>What the net sees · last 10 s <span class="right hint">counted ~1 s behind live, so each step has context on both sides</span></h3>
+        <canvas class="chart" id="cDens"></canvas>
+        <div class="legend"><span><i style="background:var(--violet)"></i>net's step density (area of each bump ≈ 1 step)</span><span><i style="background:#fff"></i>counted step</span></div>
+        <canvas class="chart" id="cSig" style="margin-top:14px"></canvas>
+        <div class="legend"><span><i style="background:var(--accent)"></i>|a| (g)</span><span><i style="background:var(--warn)"></i>|ω| (rad/s ÷ 4)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECORD -->
+  <section id="tab-record" class="hidden">
+    <div class="grid g2">
+      <div class="card">
+        <h3>1 · What are you doing?</h3>
+        <div class="kinds" id="kinds"></div>
+        <div class="row">
+          <div class="field"><label>Strap-on session</label><input id="session" value="strap1" size="10" title="Change only after taking the sensor off and putting it back on"></div>
+          <div class="field"><label>Countdown</label><select id="cd"><option value="3">3 s</option><option value="5">5 s</option></select></div>
+        </div>
+        <ol class="steps-list">
+          <li><b>Stand still</b>, press Start.</li>
+          <li>When it says GO, walk and <b>count every step out loud</b> (both feet: left = 1, right = 2, …).</li>
+          <li>Stop walking, stand still, press <b>Stop</b>, type your count.</li>
+        </ol>
+        <p class="hint">Aim for 30–100 steps per recording. Zero-step kinds (dashed) teach the net what <i>isn't</i> a step.</p>
+      </div>
+      <div class="card">
+        <h3>2 · Record <span class="right hint num" id="rinfo"></span></h3>
+        <div class="rec-state num" id="rstate">Ready</div>
+        <div style="text-align:center"><button class="btn green" id="rbtn" disabled>Start</button></div>
+        <div class="confirm hidden" id="confirm">
+          <div style="font-weight:700;margin-bottom:8px" id="ctitle">How many steps did you take?</div>
+          <div class="row" style="margin-top:0">
+            <input class="stepsin num" id="stepsin" type="number" min="0" inputmode="numeric" placeholder="0">
+            <button class="btn" id="save">Save</button>
+            <button class="btn ghost" id="discard">Discard</button>
+          </div>
+          <div class="hint" style="margin-top:8px">Type the number you counted; the gyro's check is shown after saving.</div>
+        </div>
+        <div class="hint" id="rmsg" style="margin-top:12px;min-height:18px"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Coverage <span class="right hint">aim for 2+ recordings of each kind</span></h3>
+      <div class="cov" id="cov"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Recordings <span class="right hint" id="rtot"></span></h3>
+      <div style="overflow-x:auto"><table><thead><tr><th>Recording</th><th>Kind</th><th>Steps</th><th>Length</th><th>Gyro check</th><th>|a| peaks</th><th></th></tr></thead><tbody id="rtable"></tbody></table></div>
+      <p class="hint">Gyro check: the gyro sees each swing of the strapped leg and places your counted steps in time. <span class="badge ok">placed</span> recordings train the net step by step; <span class="badge warn">count only</span> ones train it through their total.</p>
+    </div>
+  </section>
+
+  <!-- MODEL -->
+  <section id="tab-model" class="hidden">
+    <div class="grid g3">
+      <div class="card kpi"><div class="v num" id="kAcc">–</div><div class="k">of steps counted right</div><div class="hint" id="kAcc2"></div></div>
+      <div class="card kpi"><div class="v num" id="kPm">–</div><div class="k">95% uncertainty of a count</div><div class="hint" id="kPm2"></div></div>
+      <div class="card kpi"><div class="v num" id="kFp">–</div><div class="k">false steps / min when not walking</div><div class="hint" id="kFp2"></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card">
+        <h3>Net vs. classical pedometers <span class="right hint">recordings it never trained on</span></h3>
+        <div class="bars" id="cmpAcc"></div>
+        <h3 style="margin-top:20px">False steps per minute (standing, fidgeting, biking)</h3>
+        <div class="bars" id="cmpFp"></div>
+      </div>
+      <div class="card">
+        <h3>Train <span class="right hint" id="tinfo"></span></h3>
+        <p class="hint" style="margin-top:0">Tests the net on every recording it didn't see (one fresh net per recording), then trains the final net on all of them. Takes a few minutes on the GPU.</p>
+        <button class="btn" id="train">Train the net</button>
+        <details style="margin-top:14px"><summary class="hint" style="cursor:pointer">Training output</summary><pre class="log" id="tlog"></pre></details>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Every held-out recording</h3>
+      <div style="overflow-x:auto"><table><thead><tr><th>Recording</th><th>Kind</th><th>You counted</th><th>Net</th><th>Net error</th><th>|a| peaks</th><th>2× gyro</th></tr></thead><tbody id="cvtable"></tbody></table></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>Plots</h3><div class="plots" id="plots"></div></div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const api = (p, body) => fetch(p, body === undefined ? {} : {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)}).then(r => r.json());
+let S = null, kind = null, lastShown = 0, foot = 0, trainedAt = null;
+
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x === b));
+  for (const t of ["count", "record", "model"]) $("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab);
+  if (b.dataset.tab === "record") loadRecordings();
+  if (b.dataset.tab === "model") loadModel(true);
+});
+
+const FOOT = '<svg viewBox="0 0 20 32" fill="currentColor"><ellipse cx="10" cy="11" rx="6" ry="10"/><ellipse cx="10" cy="27" rx="4.5" ry="4.5"/></svg>';
+function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+
+// ── charts ──
+function setup(c) {
+  const r = c.getBoundingClientRect(), d = devicePixelRatio || 1;
+  if (c.width !== Math.round(r.width * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); }
+  const x = c.getContext("2d"); x.setTransform(d, 0, 0, d, 0, 0); x.clearRect(0, 0, r.width, r.height);
+  return [x, r.width, r.height];
+}
+function axes(x, w, h, span, ymax, label) {
+  x.strokeStyle = "rgba(255,255,255,.06)"; x.fillStyle = "#5a6273"; x.font = "11px Inter"; x.lineWidth = 1;
+  for (let s = 0; s <= span; s += 2) { const px = w - 6 - (s / span) * (w - 40); x.beginPath(); x.moveTo(px, 6); x.lineTo(px, h - 18); x.stroke(); x.fillText(s ? `-${s}s` : "now", px - 10, h - 4); }
+  x.fillText(label, 4, 14);
+}
+function drawDens(sig) {
+  const [x, w, h] = setup($("cDens")), span = 10, X = t => w - 6 - (-t / span) * (w - 40);
+  const ymax = Math.max(0.16, ...sig.dens) * 1.1, Y = v => h - 18 - (v / ymax) * (h - 30);
+  axes(x, w, h, span, ymax, "steps / sample");
+  if (sig.dens_t.length) {
+    const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "rgba(167,139,250,.55)"); g.addColorStop(1, "rgba(167,139,250,.02)");
+    x.beginPath(); x.moveTo(X(sig.dens_t[0]), Y(0));
+    sig.dens_t.forEach((t, i) => x.lineTo(X(t), Y(sig.dens[i]))); x.lineTo(X(sig.dens_t.at(-1)), Y(0)); x.closePath();
+    x.fillStyle = g; x.fill();
+    x.beginPath(); sig.dens_t.forEach((t, i) => i ? x.lineTo(X(t), Y(sig.dens[i])) : x.moveTo(X(t), Y(sig.dens[i])));
+    x.strokeStyle = "#a78bfa"; x.lineWidth = 1.6; x.stroke();
+  }
+  x.fillStyle = "#fff";
+  for (const t of sig.steps) { x.beginPath(); x.arc(X(t), 14, 3.5, 0, 7); x.fill(); x.fillRect(X(t) - .5, 18, 1, h - 36); }
+}
+function drawSig(sig) {
+  const [x, w, h] = setup($("cSig")), span = 10, X = t => w - 6 - (-t / span) * (w - 40);
+  const vals = sig.amag.concat(sig.gyro.map(v => v / 4)), ymax = Math.max(1.6, ...vals) * 1.05, Y = v => h - 18 - (v / ymax) * (h - 30);
+  axes(x, w, h, span, ymax, "");
+  for (const [arr, col, sc] of [[sig.gyro, "#ffb547", .25], [sig.amag, "#7c9cff", 1]]) {
+    x.beginPath(); sig.t.forEach((t, i) => i ? x.lineTo(X(t), Y(arr[i] * sc)) : x.moveTo(X(t), Y(arr[i] * sc)));
+    x.strokeStyle = col; x.lineWidth = 1.5; x.stroke();
+  }
+  x.strokeStyle = "rgba(255,255,255,.25)"; x.setLineDash([4, 4]); x.beginPath(); x.moveTo(34, Y(1)); x.lineTo(w - 6, Y(1)); x.stroke(); x.setLineDash([]);
+  x.fillStyle = "#5a6273"; x.fillText("1 g", 6, Y(1) + 4);
+}
+
+// ── status loop ──
+async function tick() {
+  try { S = await api("/api/status"); } catch (e) { return; }
+  const b = S.board;
+  $("bdot").classList.toggle("on", b.connected);
+  $("btxt").textContent = b.connected ? `board · ${b.rate}/s` : "board offline";
+  $("offline").classList.toggle("hidden", b.connected);
+  const m = S.model;
+  $("mchip").textContent = m.ready ? (m.metrics && m.metrics.net ? `net · ${m.metrics.net.accuracy.toFixed(1)}% on unseen walks` : "net trained") : "no net yet";
+  if (m.trained_at !== trainedAt) { trainedAt = m.trained_at; if (!$("tab-model").classList.contains("hidden")) loadModel(true); }
+
+  // count
+  const c = S.count;
+  $("count").textContent = c.shown;
+  if (c.shown > lastShown) {
+    $("count").classList.remove("bump"); void $("count").offsetWidth; $("count").classList.add("bump");
+    for (let i = lastShown; i < c.shown && i < lastShown + 4; i++) {
+      const t = $("trail"); t.insertAdjacentHTML("beforeend", FOOT); const el = t.lastElementChild; if (foot++ % 2) el.classList.add("r");
+      while (t.children.length > 22) t.firstElementChild.remove();
+    }
+  }
+  if (c.shown < lastShown) $("trail").innerHTML = "";
+  lastShown = c.shown;
+  $("pm").innerHTML = c.pm != null ? `steps <b>± ${Math.round(c.pm)}</b> <span class="hint">(95%)</span>` : "steps";
+  $("cad").textContent = c.running && c.cadence ? c.cadence + "/min" : "–";
+  $("ctime").textContent = fmtTime(c.elapsed);
+  $("cstart").textContent = c.running ? "Pause" : (c.steps > 0 ? "Resume" : "Start counting");
+  $("cstart").className = "btn " + (c.running ? "ghost" : "green");
+  $("cstart").disabled = !m.ready;
+  $("cnote").textContent = !m.ready ? "Record some counted walks and train the net first (Record and Model tabs)." :
+                           c.running ? "Walk around: the count also shows on the board's LED matrix." : "";
+
+  // record
+  const r = S.rec;
+  if (!$("kinds").children.length) buildKinds();
+  document.querySelectorAll(".kind").forEach(k => k.disabled = r.state !== "idle");
+  $("session").disabled = r.state !== "idle";
+  const rb = $("rbtn");
+  rb.disabled = r.state === "confirm" || (r.state === "idle" && (!kind || !b.connected));
+  rb.textContent = r.state === "idle" ? "Start" : r.state === "countdown" ? "Cancel" : r.state === "recording" ? "Stop" : "Stop";
+  rb.className = "btn " + (r.state === "recording" ? "red" : r.state === "countdown" ? "ghost" : "green");
+  $("rstate").textContent = r.state === "countdown" ? Math.ceil(r.countdown) :
+                            r.state === "recording" ? (r.elapsed < 1.2 ? "GO!" : fmtTime(r.elapsed)) :
+                            r.state === "confirm" ? "Done" : (kind ? S.kinds[kind] : "Pick what you're doing");
+  $("rstate").style.fontSize = r.state === "idle" ? "22px" : "46px";
+  $("rinfo").textContent = r.state === "recording" ? `${r.samples} samples` : "";
+  const conf = r.state === "confirm";
+  if (conf && $("confirm").classList.contains("hidden")) {
+    const zero = S.zero_kinds.includes(r.kind);
+    $("ctitle").textContent = zero ? "0-step recording: save it?" : "How many steps did you take?";
+    $("stepsin").classList.toggle("hidden", zero); $("stepsin").value = ""; if (!zero) setTimeout(() => $("stepsin").focus(), 50);
+  }
+  $("confirm").classList.toggle("hidden", !conf);
+  $("rmsg").textContent = r.message || "";
+
+  // training
+  $("train").disabled = S.training.running;
+  $("train").innerHTML = S.training.running ? '<span class="spin"></span>Training…' : "Train the net";
+  if (S.training.running || !$("tab-model").classList.contains("hidden")) loadLog();
+}
+async function sigTick() {
+  if ($("tab-count").classList.contains("hidden")) return;
+  try { const s = await api("/api/signal?s=10"); drawDens(s); drawSig(s); } catch (e) {}
+}
+
+// ── record ──
+function buildKinds() {
+  $("kinds").innerHTML = Object.entries(S.kinds).map(([k, d]) =>
+    `<button class="kind ${S.zero_kinds.includes(k) ? "zero" : ""}" data-k="${k}">${k}<small>${d}</small></button>`).join("");
+  document.querySelectorAll(".kind").forEach(b => b.onclick = () => {
+    kind = b.dataset.k; document.querySelectorAll(".kind").forEach(x => x.classList.toggle("sel", x === b)); });
+}
+$("rbtn").onclick = async () => {
+  if (S.rec.state === "idle") {
+    const r = await api("/api/start", {kind, session: $("session").value, countdown: +$("cd").value});
+    if (r.error) $("rmsg").textContent = r.error;
+  } else await api("/api/stop", {});
+  tick();
+};
+$("save").onclick = async () => {
+  const zero = S.zero_kinds.includes(S.rec.kind), n = parseInt($("stepsin").value, 10);
+  if (!zero && !(n >= 0)) { $("stepsin").focus(); return; }
+  await api("/api/save", {steps: zero ? 0 : n}); await tick(); loadRecordings();
+};
+$("stepsin").onkeydown = e => { if (e.key === "Enter") $("save").click(); };
+$("discard").onclick = async () => { await api("/api/discard", {}); tick(); };
+
+async function loadRecordings() {
+  const recs = await api("/api/recordings");
+  const by = {};
+  for (const r of recs) { by[r.kind] = by[r.kind] || {n: 0, s: 0}; by[r.kind].n++; by[r.kind].s += r.steps; }
+  const kinds = S ? Object.keys(S.kinds) : Object.keys(by);
+  $("cov").innerHTML = kinds.map(k => { const v = by[k] || {n: 0, s: 0};
+    return `<div class="covc ${v.n < 2 ? "low" : ""}"><div class="k">${k}</div><div class="v num">${v.n} <span class="hint">rec · ${v.s} steps</span></div></div>`; }).join("");
+  const own = recs.filter(r => r.source === "steps");
+  $("rtot").textContent = `${recs.length} recordings · ${recs.reduce((a, r) => a + r.steps, 0)} counted steps`;
+  $("rtable").innerHTML = recs.slice().reverse().map(r => {
+    const check = r.steps === 0 ? '<span class="badge dim">0 steps</span>' :
+      r.matched ? `<span class="badge ok">placed · ${r.gyro_steps}</span>` : `<span class="badge warn">count only · gyro ${r.gyro_steps}</span>`;
+    return `<tr><td class="mono" style="font-size:12px">${r.name}${r.source === "gait" ? ' <span class="badge dim">gait app</span>' : ""}</td>
+      <td>${r.kind}</td><td class="num"><b>${r.steps}</b></td><td class="num">${r.seconds} s</td><td>${check}</td><td class="num">${r.accel_peaks}</td>
+      <td>${r.source === "steps" ? `<button class="x" title="Delete" data-n="${r.name}">✕</button>` : ""}</td></tr>`; }).join("");
+  document.querySelectorAll("#rtable .x").forEach(b => b.onclick = async () => {
+    if (!confirm("Delete " + b.dataset.n + "?")) return; await api("/api/delete", {name: b.dataset.n}); loadRecordings(); });
+}
+
+// ── count controls ──
+$("cstart").onclick = async () => { await api("/api/counter", {action: S.count.running ? "pause" : "start"}); tick(); };
+$("creset").onclick = async () => { await api("/api/counter", {action: "reset"}); lastShown = 0; $("trail").innerHTML = ""; tick(); };
+
+// ── model ──
+const NAMES = {net: "Neural net (PyTorch)", pre: "Pre-trained only (public data)", accel: "|a| peak counter", gyro: "2 × gyro swings"};
+const COLS = {net: "linear-gradient(90deg,#7c9cff,#a78bfa)", accel: "#ffb547", gyro: "#3ecf8e", pre: "#94a3b8"};
+async function loadModel(force) {
+  const m = S && S.model.metrics;
+  if (m && m.net) {
+    const n = m.net;
+    $("kAcc").textContent = n.accuracy.toFixed(1) + "%";
+    $("kAcc2").textContent = n.mape_ci ? `mean error ${n.mape.toFixed(1)}% per walk (95% CI ${n.mape_ci[0].toFixed(1)}–${n.mape_ci[1].toFixed(1)}%)` : `mean error ${n.mape.toFixed(1)}% per walk`;
+    $("kPm").textContent = "± " + (1.96 * n.sd).toFixed(1) + "%";
+    $("kPm2").textContent = `bias ${n.bias >= 0 ? "+" : ""}${n.bias.toFixed(1)}%: 100 steps reads ${Math.round(100 * (1 + n.bias / 100 - 1.96 * n.sd / 100))}–${Math.round(100 * (1 + n.bias / 100 + 1.96 * n.sd / 100))}`;
+    $("kFp").textContent = n.false_per_min != null ? n.false_per_min.toFixed(1) : "–";
+    $("kFp2").textContent = m.accel.false_per_min != null ? `|a| peak counter: ${m.accel.false_per_min.toFixed(1)} · gyro: ${m.gyro.false_per_min.toFixed(1)}` : "";
+    $("cmpAcc").innerHTML = Object.keys(NAMES).filter(k => m[k]).map(k => `<div class="bar"><span>${NAMES[k]}</span><div class="track"><div class="fill" style="width:${Math.max(0, m[k].accuracy)}%;background:${COLS[k]}"></div></div><b class="num">${m[k].accuracy.toFixed(1)}%</b></div>`).join("");
+    const fmax = Math.max(1, ...Object.keys(NAMES).filter(k => m[k]).map(k => m[k].false_per_min || 0));
+    $("cmpFp").innerHTML = Object.keys(NAMES).filter(k => m[k]).map(k => `<div class="bar"><span>${NAMES[k]}</span><div class="track"><div class="fill" style="width:${100 * (m[k].false_per_min || 0) / fmax}%;background:${COLS[k]}"></div></div><b class="num">${(m[k].false_per_min ?? 0).toFixed(1)}</b></div>`).join("");
+  } else {
+    for (const id of ["kAcc", "kPm", "kFp"]) $(id).textContent = "–";
+    $("cmpAcc").innerHTML = '<p class="hint">Train the net to see how it does on recordings it never saw.</p>'; $("cmpFp").innerHTML = "";
+  }
+  $("tinfo").textContent = S && S.model.trained_at ? "last trained " + new Date(S.model.trained_at * 1000).toLocaleString() : "";
+  if (!force) return;
+  try {
+    const rows = await api("/api/cv");
+    $("cvtable").innerHTML = Array.isArray(rows) ? rows.map(r => { const e = r.net - r.true;
+      return `<tr><td class="mono" style="font-size:12px">${r.name}</td><td>${r.kind}</td><td class="num"><b>${r.true}</b></td><td class="num">${r.net.toFixed(1)}</td>
+      <td class="num" style="color:${Math.abs(e) <= Math.max(2, .05 * r.true) ? "var(--ok)" : "var(--warn)"}">${e >= 0 ? "+" : ""}${e.toFixed(1)}${r.true ? ` (${(100 * e / r.true).toFixed(0)}%)` : ""}</td>
+      <td class="num">${r.accel}</td><td class="num">${r.gyro}</td></tr>`; }).join("") : "";
+  } catch (e) { $("cvtable").innerHTML = ""; }
+  $("plots").innerHTML = (S ? S.model.plots : []).map(p => `<img src="/plots/${p}?t=${trainedAt}" alt="${p}">`).join("");
+}
+async function loadLog() { const l = await api("/api/train_log"); if (l.log.length) { $("tlog").textContent = l.log.join("\n"); $("tlog").scrollTop = 1e9; } }
+$("train").onclick = async () => { await api("/api/train", {}); document.querySelector("details").open = true; tick(); };
+
+tick(); setInterval(tick, 400); setInterval(sigTick, 250);
+addEventListener("resize", sigTick);
+</script>
+</body>
+</html>
