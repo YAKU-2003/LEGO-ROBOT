@@ -1,0 +1,80 @@
+[
+ {
+  "scene": 1,
+  "name": "Title",
+  "start_s": 0.0,
+  "length_s": 8
+ },
+ {
+  "scene": 2,
+  "name": "The idea",
+  "start_s": 8.0,
+  "length_s": 13
+ },
+ {
+  "scene": 3,
+  "name": "What the network sees",
+  "start_s": 21.0,
+  "length_s": 14
+ },
+ {
+  "scene": 4,
+  "name": "The hand mask (early fusion)",
+  "start_s": 35.0,
+  "length_s": 25
+ },
+ {
+  "scene": 5,
+  "name": "Convolution",
+  "start_s": 60.0,
+  "length_s": 24
+ },
+ {
+  "scene": 6,
+  "name": "ReLU",
+  "start_s": 84.0,
+  "length_s": 12
+ },
+ {
+  "scene": 7,
+  "name": "Max-pooling",
+  "start_s": 96.0,
+  "length_s": 19
+ },
+ {
+  "scene": 8,
+  "name": "Three blocks deep",
+  "start_s": 115.0,
+  "length_s": 18
+ },
+ {
+  "scene": 9,
+  "name": "Linear layer + softmax",
+  "start_s": 133.0,
+  "length_s": 16
+ },
+ {
+  "scene": 10,
+  "name": "Training: cross-entropy + backprop",
+  "start_s": 149.0,
+  "length_s": 23
+ },
+ {
+  "scene": 11,
+  "name": "Gradient descent on the V data",
+  "start_s": 172.0,
+  "length_s": 28
+ },
+ {
+  "scene": 12,
+  "name": "The lock policy",
+  "start_s": 200.0,
+  "length_s": 17
+ },
+ {
+  "scene": 13,
+  "name": "End",
+  "start_s": 217.0,
+  "length_s": 8
+ }
+]

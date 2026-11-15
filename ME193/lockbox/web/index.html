@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Finger-Code Safe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c11; --surface: #11141b; --surface2: #171b24; --surface3: #1e2330;
+    --border: rgba(255,255,255,.07); --border2: rgba(255,255,255,.12);
+    --text: #e9ecf2; --muted: #8b93a5; --faint: #5a6273;
+    --accent: #7c9cff; --ok: #3ecf8e; --warn: #ffb547; --bad: #ff5c7a; --cap: #ff9f7a;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body { font: 15px/1.45 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased;
+         background: radial-gradient(1200px 600px at 10% -10%, rgba(124,156,255,.10), transparent 60%),
+                     radial-gradient(900px 500px at 110% 10%, rgba(62,207,142,.07), transparent 60%), var(--bg);
+         min-height: 100vh; }
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 48px; }
+
+  .top { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+  .logo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+          background: linear-gradient(135deg, var(--accent), #a78bfa); box-shadow: 0 6px 24px rgba(124,156,255,.35); }
+  .brand h1 { font-size: 19px; margin: 0; font-weight: 800; letter-spacing: -.01em; }
+  .brand p { margin: 0; font-size: 12px; color: var(--muted); }
+  .chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px;
+          background: var(--surface); border: 1px solid var(--border); font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); position: relative; }
+  .pulse.on { background: var(--ok); }
+  .pulse.on::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--ok);
+                     animation: ping 1.6s ease-out infinite; }
+  @keyframes ping { from { opacity: .8; transform: scale(.6); } to { opacity: 0; transform: scale(1.6); } }
+
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--border);
+          border-radius: 14px; margin-bottom: 18px; }
+  .tabs button { border: 0; background: none; color: var(--muted); font: 600 14px Inter, system-ui;
+                 padding: 10px 18px; border-radius: 10px; cursor: pointer; transition: .15s; }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.active { background: var(--surface3); color: var(--text); box-shadow: inset 0 0 0 1px var(--border2); }
+  .page { display: none; } .page.active { display: block; }
+
+  .grid { display: grid; gap: 16px; }
+  .g-safe { grid-template-columns: 1.35fr 1fr; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g6 { grid-template-columns: repeat(6, 1fr); }
+  @media (max-width: 900px) { .g-safe, .g2 { grid-template-columns: 1fr; } .g6 { grid-template-columns: repeat(3, 1fr); } }
+  .card { background: linear-gradient(180deg, var(--surface2), var(--surface)); border: 1px solid var(--border);
+          border-radius: var(--radius); padding: 18px; min-width: 0; position: relative; }
+  .card h3 { margin: 0 0 14px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+             color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .card h3 .right { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; }
+  .stack { display: grid; gap: 16px; align-content: start; }
+
+  /* video */
+  .video { position: relative; border-radius: 14px; overflow: hidden; background: #000; aspect-ratio: 16/9; }
+  .video img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .video .badge { position: absolute; left: 12px; top: 12px; padding: 8px 14px; border-radius: 12px;
+                  background: rgba(10,12,17,.75); backdrop-filter: blur(6px); border: 1px solid var(--border2);
+                  font-weight: 800; font-size: 22px; display: flex; gap: 10px; align-items: baseline; }
+  .video .badge small { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .video .nocam { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+
+  .gridview { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: start; }
+  .gridview img { width: 100%; aspect-ratio: 1; border-radius: 12px; background: #000; display: block; }
+  @media (max-width: 520px) { .gridview { grid-template-columns: 1fr; } }
+
+  /* probability bars */
+  .probs { display: grid; gap: 7px; margin-top: 14px; }
+  .prow { display: grid; grid-template-columns: 82px 1fr 48px; white-space: nowrap; align-items: center; gap: 10px; font-size: 13px; }
+  .prow .lab { color: var(--muted); }
+  .bar { height: 12px; background: var(--surface3); border-radius: 99px; overflow: hidden; position: relative; }
+  .bar i { position: absolute; inset: 0 auto 0 0; background: var(--faint); border-radius: 99px; transition: width .12s; }
+  .prow.best .bar i { background: var(--accent); }
+  .prow.best .lab { color: var(--text); font-weight: 600; }
+  .bar .thr { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--warn); opacity: .8; }
+
+  /* safe */
+  .safe { text-align: center; padding: 26px 18px 22px; transition: box-shadow .3s, border-color .3s; }
+  .safe.s-ENTER { border-color: rgba(255,181,71,.45); box-shadow: 0 0 40px rgba(255,181,71,.12); }
+  .safe.s-OPEN { border-color: rgba(62,207,142,.55); box-shadow: 0 0 50px rgba(62,207,142,.22); }
+  .safe.s-WRONG, .safe.s-LOCKOUT { border-color: rgba(255,92,122,.55); box-shadow: 0 0 40px rgba(255,92,122,.18); }
+  .safe.shake { animation: shake .45s; }
+  @keyframes shake { 20%,60% { transform: translateX(-8px); } 40%,80% { transform: translateX(8px); } }
+  .lockicon { width: 92px; height: 92px; margin: 0 auto 6px; }
+  .lockicon .shackle { transition: transform .45s cubic-bezier(.3,1.6,.5,1); transform-origin: 70% 100%; }
+  .s-OPEN .lockicon .shackle { transform: translateY(-14px) rotate(-28deg); }
+  .state { font-size: 28px; font-weight: 800; letter-spacing: -.01em; margin: 4px 0 2px; }
+  .sub { color: var(--muted); font-size: 14px; min-height: 21px; }
+  .leds { display: flex; justify-content: center; gap: 22px; margin: 22px 0 18px; }
+  .led { width: 64px; height: 64px; position: relative; }
+  .led svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .led .bg { fill: var(--surface3); stroke: var(--border2); stroke-width: 2; }
+  .led .ring { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset .1s; }
+  .led .digit { position: absolute; inset: 0; display: grid; place-items: center; font: 800 24px "JetBrains Mono", monospace; }
+  .led.on .bg { fill: var(--warn); stroke: transparent; filter: drop-shadow(0 0 10px rgba(255,181,71,.7)); }
+  .s-OPEN .led .bg { fill: var(--ok); filter: drop-shadow(0 0 10px rgba(62,207,142,.7)); stroke: transparent; }
+  .s-WRONG .led .bg, .s-LOCKOUT .led .bg { fill: var(--bad); filter: drop-shadow(0 0 10px rgba(255,92,122,.6)); stroke: transparent; }
+  .led.on .digit, .s-OPEN .led .digit { color: #10131a; }
+  .timer { height: 6px; background: var(--surface3); border-radius: 99px; overflow: hidden; margin: 0 auto 18px; max-width: 280px; }
+  .timer i { display: block; height: 100%; background: var(--warn); transition: width .2s linear; }
+  .tries { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
+  .tries span { width: 26px; height: 5px; border-radius: 99px; background: var(--surface3); }
+  .tries span.used { background: var(--bad); }
+
+  button.btn { border: 1px solid var(--border2); background: var(--surface3); color: var(--text); font: 600 14px Inter, system-ui;
+               padding: 10px 16px; border-radius: 12px; cursor: pointer; transition: .15s; }
+  button.btn:hover:not(:disabled) { border-color: var(--accent); }
+  button.btn:disabled { opacity: .45; cursor: default; }
+  button.big { font-size: 17px; padding: 16px 30px; border-radius: 999px; border: 0;
+               background: linear-gradient(135deg, #ff6b6b, #e0344f); box-shadow: 0 8px 28px rgba(224,52,79,.4),
+               inset 0 -4px 0 rgba(0,0,0,.25); }
+  button.big:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 4px 14px rgba(224,52,79,.4), inset 0 -2px 0 rgba(0,0,0,.25); }
+  .kbd { font: 600 11px "JetBrains Mono", monospace; padding: 2px 6px; border-radius: 6px; border: 1px solid var(--border2); color: var(--muted); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type=text], input[type=number], select { background: var(--surface3); color: var(--text); border: 1px solid var(--border2);
+               border-radius: 10px; padding: 9px 12px; font: 600 14px "JetBrains Mono", monospace; width: 90px; }
+  label.tog { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+
+  .log { display: grid; gap: 6px; max-height: 260px; overflow: auto; font-size: 13px; }
+  .log div { display: grid; grid-template-columns: 64px 10px 1fr; gap: 8px; align-items: center; }
+  .log time { color: var(--faint); font: 500 12px "JetBrains Mono", monospace; }
+  .log b { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .log .open b { background: var(--ok); } .log .wrong b, .log .lockout b { background: var(--bad); }
+  .log .digit b, .log .button b { background: var(--warn); } .log .model b, .log .capture b { background: var(--accent); }
+
+  .policy { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .pol { background: var(--surface3); border-radius: 12px; padding: 12px; font-size: 13px; color: var(--muted); }
+  .pol b { display: block; color: var(--text); font-size: 20px; font-weight: 800; }
+
+  /* capture */
+  .cls { text-align: center; padding: 12px; }
+  .cls img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; background: var(--surface3); display: block; margin-bottom: 10px; }
+  .cls .n { font-size: 30px; font-weight: 800; }
+  .cls .c { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .progress { height: 10px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+  .progress i { display: block; height: 100%; background: var(--cap); transition: width .15s; }
+
+  /* model */
+  pre.term { background: #07080c; border: 1px solid var(--border); border-radius: 12px; padding: 12px; margin: 0;
+             font: 500 12px/1.5 "JetBrains Mono", monospace; color: #b8c0d0; height: 300px; overflow: auto; white-space: pre-wrap; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .kpi { background: var(--surface3); border-radius: 12px; padding: 12px; }
+  .kpi b { display: block; font-size: 24px; font-weight: 800; }
+  .kpi span { font-size: 12px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td { padding: 6px 4px; border-bottom: 1px solid var(--border); }
+  td:last-child { text-align: right; font-weight: 700; }
+  .plot { width: 100%; border-radius: 12px; background: #fff; display: block; }
+  .muted { color: var(--muted); }
+  p.note { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="brand">
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <div><h1>Finger-Code Safe</h1><p>CNN + hand-grid finger counting · 3-digit gesture lock · ME193</p></div>
+    </div>
+    <span class="chip"><span class="pulse" id="campulse"></span><span id="camtxt">camera…</span></span>
+    <span class="chip" id="modeltxt">model…</span>
+  </div>
+
+  <div class="tabs">
+    <button class="active" data-tab="safe">Safe</button>
+    <button data-tab="capture">Capture</button>
+    <button data-tab="model">Model</button>
+  </div>
+
+  <!-- ───────────── SAFE ───────────── -->
+  <section class="page active" id="p-safe">
+    <div class="grid g-safe">
+      <div class="stack">
+        <div class="card">
+          <h3>Camera <span class="right mono num" id="fps"></span></h3>
+          <div class="video">
+            <img id="vid" src="/video.mjpg" alt="Live webcam with the capture box">
+            <div class="badge"><span id="bigk">–</span><small id="bigconf">fingers</small></div>
+          </div>
+          <div class="probs" id="probs"></div>
+          <p class="note">Orange tick = the <span id="thrtxt">85%</span> confidence a frame needs before it can count toward a digit.</p>
+        </div>
+        <div class="card">
+          <h3>What the grid sees</h3>
+          <div class="gridview">
+            <img src="/grid.mjpg" alt="Live hand mask with the 12 by 12 density grid and finger-height profile">
+            <div class="muted" style="font-size:13px">
+              <p style="margin-top:0"><b style="color:var(--text)">Hand mask:</b> pixels redder than the background (skin) light up.</p>
+              <p><b style="color:var(--cap)">12 × 12 grid:</b> how much of each cell is covered by hand — 144 numbers.</p>
+              <p><b style="color:var(--warn)">Finger profile:</b> how high the hand reaches in each of 24 columns — raised fingers are the tall bumps.</p>
+              <p style="margin-bottom:0">These 168 numbers join the CNN's 9,216 learned features in the <b style="color:var(--text)">same final layer</b> — one model.</p>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>How the lock decides</h3>
+          <div class="policy" id="policy"></div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card safe s-IDLE" id="safe">
+          <svg class="lockicon" viewBox="0 0 100 100" fill="none" stroke-width="7" stroke-linecap="round">
+            <path class="shackle" d="M30 46V32a20 20 0 0 1 40 0v14" stroke="currentColor"/>
+            <rect x="18" y="44" width="64" height="48" rx="10" fill="currentColor" stroke="none" opacity=".9"/>
+            <circle cx="50" cy="64" r="6" fill="#0a0c11"/><rect x="47" y="66" width="6" height="12" rx="3" fill="#0a0c11"/>
+          </svg>
+          <div class="state" id="state">LOCKED</div>
+          <div class="sub" id="sub">Press the button to start</div>
+          <div class="leds" id="leds"></div>
+          <div class="timer"><i id="timer" style="width:0"></i></div>
+          <div class="tries" id="tries"></div>
+          <button class="big" id="btn">Press button</button>
+          <div class="row" style="justify-content:center;margin-top:14px">
+            <span class="muted" style="font-size:12px"><span class="kbd">Space</span> button · <span class="kbd">Esc</span> cancel</span>
+            <label class="tog"><input type="checkbox" id="reveal"> show digits</label>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Activity</h3>
+          <div class="log" id="log"></div>
+        </div>
+        <div class="card">
+          <h3>Change code</h3>
+          <div class="row">
+            <input type="text" id="newcode" maxlength="3" placeholder="314" inputmode="numeric">
+            <button class="btn" id="setcode">Save</button>
+            <span class="muted" id="codemsg" style="font-size:13px">3 digits, each 1–5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── CAPTURE ───────────── -->
+  <section class="page" id="p-capture">
+    <div class="card" style="margin-bottom:16px">
+      <h3>Capture training photos <span class="right">camera
+        <select id="camsel" style="width:70px;margin-left:6px"><option>0</option><option>1</option><option>2</option></select></span></h3>
+      <div class="row" style="margin-bottom:12px">
+        <span class="muted">Photos per burst</span><input type="number" id="burst" value="200" min="10" max="500">
+        <span class="muted" id="capmsg">Keep your hand inside the box and keep it moving a little (tilt, rotate, closer/further).
+          New lighting? Add a burst per class, then retrain.</span>
+      </div>
+      <div class="progress"><i id="capbar" style="width:0"></i></div>
+    </div>
+    <div class="grid g6" id="classes"></div>
+  </section>
+
+  <!-- ───────────── MODEL ───────────── -->
+  <section class="page" id="p-model">
+    <div class="grid g2">
+      <div class="card">
+        <h3>Train <span class="right row"><span class="muted">epochs</span>
+          <input type="number" id="epochs" value="80" min="5" max="200" style="width:70px">
+          <button class="btn" id="train">Retrain</button></span></h3>
+        <pre class="term" id="term">Press Retrain to train the CNN on every photo in Downloads/gestures (about 3–4 min on the CPU).</pre>
+      </div>
+      <div class="card">
+        <h3>Current model <span class="right muted" id="trainedat"></span></h3>
+        <div class="kpis">
+          <div class="kpi"><b id="kacc">–</b><span>validation accuracy</span></div>
+          <div class="kpi"><b id="kparams">–</b><span>weights</span></div>
+          <div class="kpi"><b id="kepochs">–</b><span>epochs</span></div>
+        </div>
+        <div class="grid g2" style="gap:14px">
+          <div><h3>Per finger count</h3><table id="perclass"></table></div>
+          <div><h3>Lighting test</h3><table id="lighting"></table></div>
+        </div>
+      </div>
+      <div class="card"><h3>Loss &amp; accuracy vs epoch</h3><img class="plot" id="curves" alt="Training curves"></div>
+      <div class="card"><h3>Confusion matrix (held-out photos)</h3><img class="plot" id="confusion" alt="Confusion matrix"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const post = (url, body = {}) => fetch(url, { method: "POST", body: JSON.stringify(body) }).then(r => r.json());
+let S = null, prevEntered = 0, prevState = "IDLE", modelStamp = null;
+
+// ── tabs ──
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x === b));
+  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "p-" + b.dataset.tab));
+  if (b.dataset.tab === "model") loadModel();
+});
+
+// ── sounds (WebAudio, no files) ──
+let ac = null;
+function tone(freq, dur, type = "sine", when = 0, vol = .15) {
+  ac = ac || new AudioContext();
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = freq; o.connect(g); g.connect(ac.destination);
+  const t = ac.currentTime + when;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+  o.start(t); o.stop(t + dur);
+}
+const sfx = {
+  digit: () => tone(880, .12),
+  open:  () => [523, 659, 784, 1047].forEach((f, i) => tone(f, .25, "triangle", i * .09)),
+  wrong: () => { tone(160, .35, "sawtooth", 0, .12); tone(120, .45, "sawtooth", .18, .12); },
+  button: () => tone(440, .08, "square", 0, .06),
+};
+
+// ── static bits ──
+$("probs").innerHTML = [0,1,2,3,4,5].map(c =>
+  `<div class="prow" id="pr${c}"><span class="lab">${c} finger${c === 1 ? "" : "s"}</span>
+   <div class="bar"><i></i><span class="thr"></span></div><span class="num mono" style="text-align:right">0%</span></div>`).join("");
+$("leds").innerHTML = [0,1,2].map(i =>
+  `<div class="led" id="led${i}"><svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="26"/>
+   <circle class="ring" cx="32" cy="32" r="29" stroke-dasharray="182.2" stroke-dashoffset="182.2"/></svg>
+   <span class="digit"></span></div>`).join("");
+$("classes").innerHTML = [0,1,2,3,4,5].map(c =>
+  `<div class="card cls"><img id="smp${c}" alt="Latest ${c}-finger photo"><div class="n">${c}</div>
+   <div class="c"><span id="cnt${c}">0</span> photos</div><button class="btn" data-cls="${c}" style="width:100%">Capture</button></div>`).join("");
+document.querySelectorAll("[data-cls]").forEach(b => b.onclick = () =>
+  post("/api/capture", { cls: +b.dataset.cls, n: +$("burst").value }));
+$("camsel").onchange = e => post("/api/camera", { index: +e.target.value });
+
+// ── controls ──
+const press = () => { if (S && S.state === "IDLE") { sfx.button(); post("/api/button"); } };
+$("btn").onclick = press;
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+  if (e.code === "Space") { e.preventDefault(); press(); }
+  if (e.code === "Escape") post("/api/cancel");
+});
+$("setcode").onclick = async () => {
+  const r = await post("/api/code", { code: $("newcode").value.trim() });
+  $("codemsg").textContent = r.ok ? "Saved ✓" : r.error;
+  if (r.ok) $("newcode").value = "";
+};
+$("train").onclick = () => post("/api/train", { epochs: +$("epochs").value });
+
+// ── render ──
+const TITLES = { IDLE: "LOCKED", ENTER: "ENTER CODE", OPEN: "UNLOCKED", WRONG: "WRONG CODE", LOCKOUT: "LOCKED OUT" };
+const COLORS = { IDLE: "#8b93a5", ENTER: "#ffb547", OPEN: "#3ecf8e", WRONG: "#ff5c7a", LOCKOUT: "#ff5c7a" };
+
+function render(s) {
+  const p = s.policy;
+  // header
+  $("campulse").classList.toggle("on", s.camera.ok);
+  $("camtxt").textContent = s.camera.ok ? `camera ${s.camera.index}` : `camera ${s.camera.index}: no image (retrying…)`;
+  $("fps").textContent = s.camera.fps + " fps";
+  $("modeltxt").textContent = s.model_loaded ? "CNN loaded" : "no model – train first";
+
+  // CNN
+  $("bigk").textContent = s.pred.k;
+  $("bigconf").textContent = `fingers · ${Math.round(s.pred.conf * 100)}%`;
+  $("thrtxt").textContent = Math.round(p.conf_min * 100) + "%";
+  s.pred.probs.forEach((v, c) => {
+    const row = $("pr" + c);
+    row.classList.toggle("best", c === s.pred.k);
+    row.querySelector("i").style.width = (v * 100).toFixed(1) + "%";
+    row.querySelector(".thr").style.left = (p.conf_min * 100) + "%";
+    row.querySelector(".num").textContent = Math.round(v * 100) + "%";
+  });
+
+  // safe
+  const safe = $("safe");
+  safe.className = "card safe s-" + s.state;
+  safe.style.color = COLORS[s.state];
+  $("state").textContent = TITLES[s.state];
+  $("state").style.color = COLORS[s.state];
+  const sub = {
+    IDLE: "Press the button to start",
+    ENTER: s.candidate ? `Hold it… reading ${s.candidate}` : `Show digit ${s.entered + 1} of 3 under the camera`,
+    OPEN: `Welcome back · re-locks in ${Math.ceil(s.time_left)} s`,
+    WRONG: `Try ${s.wrong} of ${s.max_tries} used`,
+    LOCKOUT: `Too many tries · wait ${Math.ceil(s.time_left)} s`,
+  }[s.state];
+  $("sub").textContent = sub;
+  for (let i = 0; i < 3; i++) {
+    const led = $("led" + i), filled = i < s.entered;
+    led.classList.toggle("on", s.state === "ENTER" && filled);
+    const prog = s.state === "ENTER" && i === s.entered ? s.progress : 0;
+    led.querySelector(".ring").style.strokeDashoffset = 182.2 * (1 - prog);
+    led.querySelector(".digit").textContent = filled ? ($("reveal").checked ? s.digits[i] : "•") : "";
+  }
+  const total = { ENTER: p.entry_s, OPEN: p.open_s, LOCKOUT: p.lockout_s, WRONG: 2 }[s.state];
+  $("timer").style.width = total ? (100 * s.time_left / total) + "%" : "0";
+  $("timer").style.background = COLORS[s.state];
+  $("tries").innerHTML = Array.from({ length: s.max_tries }, (_, i) => `<span class="${i < s.wrong ? "used" : ""}"></span>`).join("");
+  $("btn").disabled = s.state !== "IDLE" || !s.model_loaded;
+
+  // sounds + shake on transitions
+  if (s.state === "ENTER" && s.entered > prevEntered) sfx.digit();
+  if (s.state !== prevState) {
+    if (s.state === "OPEN") sfx.open();
+    if (s.state === "WRONG" || s.state === "LOCKOUT") { sfx.wrong(); safe.classList.add("shake"); setTimeout(() => safe.classList.remove("shake"), 500); }
+  }
+  prevEntered = s.state === "ENTER" ? s.entered : 0; prevState = s.state;
+
+  // log
+  $("log").innerHTML = s.events.map(e => `<div class="${e.kind}"><time>${e.t}</time><b></b><span>${e.text}</span></div>`).join("");
+
+  // policy
+  $("policy").innerHTML = [
+    [Math.round(p.conf_min * 100) + "%", "min CNN confidence per frame"],
+    [p.hold_s + " s", "same digit held this long = entered"],
+    ["fist", "between two equal digits (e.g. 3-3)"],
+    [p.entry_s + " s", "to enter all 3 digits"],
+    [s.max_tries + " tries", `then a ${p.lockout_s} s lock-out`],
+  ].map(([b, t]) => `<div class="pol"><b>${b}</b>${t}</div>`).join("");
+
+  // capture
+  const c = s.capture;
+  s.counts.forEach((n, i) => $("cnt" + i).textContent = n);
+  document.querySelectorAll("[data-cls]").forEach(b => b.disabled = c.running || s.training.running);
+  $("capbar").style.width = c.total ? (100 * c.done / c.total) + "%" : "0";
+  if (c.running) $("capmsg").textContent = c.countdown > 0 ? `Get ready: ${c.cls} fingers in ${Math.ceil(c.countdown)}…`
+                                                          : `Capturing ${c.cls} fingers: ${c.done}/${c.total} – keep moving!`;
+  else if (c.message) $("capmsg").textContent = c.message;
+
+  // training
+  $("train").disabled = s.training.running || c.running;
+  $("train").textContent = s.training.running ? "Training…" : "Retrain";
+  if (s.training.log.length) {
+    const t = $("term"), atBottom = t.scrollTop + t.clientHeight >= t.scrollHeight - 20;
+    t.textContent = s.training.log.join("\n");
+    if (atBottom || s.training.running) t.scrollTop = t.scrollHeight;
+  }
+  if (S && S.training.running && !s.training.running) loadModel();
+  if (S && S.capture.running && !c.running) refreshSamples();
+  S = s;
+}
+
+function refreshSamples() { [0,1,2,3,4,5].forEach(c => $("smp" + c).src = `/sample/${c}?t=${Date.now()}`); }
+
+async function loadModel() {
+  const r = await fetch("/api/model").then(r => r.json());
+  const t = Date.now();
+  $("curves").src = "/img/training_curves.png?t=" + t;
+  $("confusion").src = "/img/confusion_matrix.png?t=" + t;
+  if (!r.val_acc) return;
+  $("kacc").textContent = (r.val_acc * 100).toFixed(1) + "%";
+  $("kparams").textContent = (r.params / 1000).toFixed(0) + "k";
+  $("kepochs").textContent = r.epochs;
+  $("trainedat").textContent = "trained " + r.trained_at;
+  $("perclass").innerHTML = r.per_class.map((v, c) => `<tr><td>${c} fingers</td><td>${Math.round(v * 100)}%</td></tr>`).join("");
+  $("lighting").innerHTML = Object.entries(r.lighting).map(([k, v]) => `<tr><td>${k}</td><td>${Math.round(v * 100)}%</td></tr>`).join("");
+}
+
+async function poll() {
+  try { render(await fetch("/api/status").then(r => r.json())); } catch (e) { $("camtxt").textContent = "server offline"; $("campulse").classList.remove("on"); }
+  setTimeout(poll, 100);
+}
+refreshSamples(); poll();
+</script>
+</body>
+</html>
