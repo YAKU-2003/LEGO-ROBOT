@@ -1,0 +1,5 @@
+name: LunchLock
+description: "Finger-code lunch safe: USB webcam + finger-counting CNN (NumPy) + lock policy on the board; drives the latch (never past closed) and shows the code on the LED matrix"
+icon: 🥪
+ports: [7000]
+bricks: []
